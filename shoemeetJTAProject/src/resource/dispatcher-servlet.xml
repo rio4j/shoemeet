@@ -1,0 +1,189 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:tx="http://www.springframework.org/schema/tx"
+	xmlns:aop="http://www.springframework.org/schema/aop"
+	xmlns:p="http://www.springframework.org/schema/p"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans
+		http://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/context
+		http://www.springframework.org/schema/context/spring-context.xsd
+		http://www.springframework.org/schema/tx 
+		http://www.springframework.org/schema/tx/spring-tx.xsd
+		http://www.springframework.org/schema/aop
+		http://www.springframework.org/schema/aop/spring-aop.xsd">
+
+	<!-- 支持 @AspectJ 标记-->  
+    <aop:aspectj-autoproxy proxy-target-class="true"/>
+	
+	<bean id="atomikosTransactionManager" class="com.atomikos.icatch.jta.UserTransactionManager" init-method="init" destroy-method="close">     
+        <property name="forceShutdown" value="true" />     
+    </bean>     
+    <bean id="atomikosUserTransaction" class="com.atomikos.icatch.jta.UserTransactionImp">     
+        <property name="transactionTimeout" value="300" />     
+    </bean>     
+    <bean id="transactionManager"  class="org.springframework.transaction.jta.JtaTransactionManager">     
+        <property name="transactionManager" ref="atomikosTransactionManager" />     
+        <property name="userTransaction" ref="atomikosUserTransaction" />     
+    </bean>
+
+	<!-- 想该扫描生效，只能将扫描组件配置放置在该处，否则，需要使用<mvc:annotation-driven />，需要有标签 xmlns:mvc="http://www.springframework.org/schema/mvc" -->
+	<!-- 
+	-->
+	<context:component-scan base-package="com.shoemeet.*" />
+	
+	<bean class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+		<property name="prefix">
+			<value>/WEB-INF/pages/</value>
+			</property>
+			<property name="suffix">
+			<value>.jsp</value>
+		</property>
+	</bean>
+	
+	<bean class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+	    <property name="locations">
+	        <list>
+	            <value>classpath:/jdbc.properties</value>
+	        </list>
+	    </property>
+    </bean>
+<!--     
+    <bean id="dataSource1" class="org.springframework.jndi.JndiObjectFactoryBean">
+		<property name="jndiName"><value>java:comp/env/data1/jndi</value></property>
+	</bean>
+	<bean id="dataSource2" class="org.springframework.jndi.JndiObjectFactoryBean">
+		<property name="jndiName"><value>java:comp/env/data2/jndi</value></property>
+	</bean>
+	<bean id="dataSource3" class="org.springframework.jndi.JndiObjectFactoryBean">
+		<property name="jndiName"><value>java:comp/env/data3/jndi</value></property>
+	</bean>
+	 -->
+    <bean id="dataSource1" class="com.atomikos.jdbc.AtomikosDataSourceBean" init-method="init" destroy-method="close">
+        <description>mysql xa datasource</description>
+        <property name="uniqueResourceName">
+            <value>data1/mysql1</value>
+        </property>
+        <property name="xaDataSourceClassName">
+            <value>com.mysql.jdbc.jdbc2.optional.MysqlXADataSource</value>
+        </property>
+        <property name="xaProperties">
+            <props>
+                <prop key="user">root</prop>
+                <prop key="password"></prop>
+                <prop key="URL">jdbc:mysql://127.0.01:3306/data1?useUnicode=true&amp;characterEncoding=utf-8</prop>
+            </props>
+        </property>
+    </bean>
+
+    <bean id="dataSource2" class="com.atomikos.jdbc.AtomikosDataSourceBean" init-method="init" destroy-method="close">
+        <description>mysql xa datasource</description>
+        <property name="uniqueResourceName">
+            <value>data2/mysql2</value>
+        </property>
+        <property name="xaDataSourceClassName">
+            <value>com.mysql.jdbc.jdbc2.optional.MysqlXADataSource</value>
+        </property>
+        <property name="xaProperties">
+            <props>
+                <prop key="user">root</prop>
+                <prop key="password"></prop>
+                <prop key="URL">jdbc:mysql://127.0.01:3306/data2?useUnicode=true&amp;characterEncoding=utf-8</prop>
+            </props>
+        </property>
+    </bean>
+
+    <bean id="dataSource3" class="com.atomikos.jdbc.AtomikosDataSourceBean" init-method="init" destroy-method="close">
+        <description>mysql xa datasource</description>
+        <property name="uniqueResourceName">
+            <value>data3/mysql3</value>
+        </property>
+        <property name="xaDataSourceClassName">
+            <value>com.mysql.jdbc.jdbc2.optional.MysqlXADataSource</value>
+        </property>
+        <property name="xaProperties">
+            <props>
+                <prop key="user">root</prop>
+                <prop key="password"></prop>
+                <prop key="URL">jdbc:mysql://127.0.01:3306/data3?useUnicode=true&amp;characterEncoding=utf-8</prop>
+            </props>
+        </property>
+    </bean>
+	
+	<aop:aspectj-autoproxy proxy-target-class="true"/>  
+  
+    <!-- 
+    <bean id="dataSource1" class="org.apache.commons.dbcp.BasicDataSource">
+		<property name="driverClassName" value="${jdbc.driverClassName}" />
+		<property name="url" value="${jdbc.url1}" />
+		<property name="username" value="${jdbc.user1}" />
+		<property name="password" value="${jdbc.password1}" />
+	</bean>
+	
+    <bean id="dataSource2" class="org.apache.commons.dbcp.BasicDataSource">
+		<property name="driverClassName" value="${jdbc.driverClassName}" />
+		<property name="url" value="${jdbc.url2}" />
+		<property name="username" value="${jdbc.user2}" />
+		<property name="password" value="${jdbc.password2}" />
+	</bean>
+    <bean id="dataSource3" class="org.apache.commons.dbcp.BasicDataSource">
+		<property name="driverClassName" value="${jdbc.driverClassName}" />
+		<property name="url" value="${jdbc.url3}" />
+		<property name="username" value="${jdbc.user3}" />
+		<property name="password" value="${jdbc.password3}" />
+	</bean>
+	 -->
+	<!-- 配置多数据源映射关系 -->
+    <bean id="dataSource" class="com.shoemeet.util.DynamicDataSource">
+        <property name="targetDataSources">
+            <map key-type="java.lang.String">
+        		<entry key="dataSource1" value-ref="dataSource1"></entry>
+                <entry key="dataSource2" value-ref="dataSource2"></entry>
+                <entry key="dataSource3" value-ref="dataSource3"></entry>
+            </map>
+        </property>
+    	<!-- 默认目标数据源为你主库数据源 -->
+        <!-- <property name="defaultTargetDataSource" ref="dataSource1"/> -->
+    </bean>
+    
+	<!-- 注解方式配置事物 在service中@Transactional -->  
+	<!--<tx:annotation-driven transaction-manager="transactionManager" /> -->
+	<!-- 用注解来实现事务管理 -->     
+	<tx:annotation-driven transaction-manager="transactionManager"/>
+	<!-- 
+	<bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">  
+		<property name="dataSource" ref="dataSource"></property>
+	</bean>
+	 -->
+	<!-- 拦截器方式配置事物-->  
+	<tx:advice id="transactionAdvice" transaction-manager="transactionManager">  
+	    <tx:attributes>  
+	        <tx:method name="add*" propagation="REQUIRED" /> 
+	        <tx:method name="save*" propagation="REQUIRED" />  
+	        <tx:method name="insert*" propagation="REQUIRED" />  
+	        <tx:method name="append*" propagation="REQUIRED" />  
+	        <tx:method name="init" propagation="REQUIRED" />  
+	        <tx:method name="update*" propagation="REQUIRED" rollback-for="Exception"/>  
+	        <tx:method name="modify*" propagation="REQUIRED" />  
+	        <tx:method name="edit*" propagation="REQUIRED" />  
+	        <tx:method name="delete*" propagation="REQUIRED" />  
+	        <tx:method name="remove*" propagation="REQUIRED" />  
+	        <tx:method name="delAndInit" propagation="REQUIRED" />  
+	
+	        <tx:method name="get*" propagation="REQUIRED" read-only="true" />  
+	        <tx:method name="find*" propagation="REQUIRED" read-only="true" />  
+	        <tx:method name="load*" propagation="REQUIRED" read-only="true" />  
+	        <tx:method name="search*" propagation="REQUIRED" read-only="true" />  
+	        <tx:method name="datagrid*" propagation="REQUIRED" read-only="true" />  
+	        
+	        <tx:method name="*" propagation="NOT_SUPPORTED" />  
+	    </tx:attributes>  
+	</tx:advice> 
+	
+	<aop:config>  
+		<aop:pointcut id="transactionPointcut" expression="execution(* com.shoemeet.service.impl.*.*(..))" />  
+		<aop:advisor pointcut-ref="transactionPointcut" advice-ref="transactionAdvice" />
+    </aop:config>
+    
+</beans>

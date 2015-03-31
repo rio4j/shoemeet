@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+		xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+		xsi:schemaLocation="
+		http://www.springframework.org/schema/beans 
+		http://www.springframework.org/schema/beans/spring-beans.xsd">
+		
+	<!-- 配置数据源 -->
+    <bean id="dataSource" class="org.apache.commons.dbcp.BasicDataSource">
+		<property name="driver" value="${jdbc.driverClassName}" />
+		<property name="driverUrl" value="${jdbc.url}" />
+		<property name="user" value="${jdbc.user}" />
+		<property name="password" value="${jdbc.password}" />
+	</bean>
+		
+  	<!-- development-->
+    <beans profile="development">
+        <bean class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+            <property name="locations">
+                <list>
+                    <value>classpath:/datasource/jdbc.properties</value>
+                    <!-- <value>classpath:redis.properties</value> -->
+                </list>
+            </property>
+        </bean>
+    </beans>
+    <!-- production-->
+    <beans profile="production">
+        <bean class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+            <property name="locations">
+                <list>
+                    <value>file:/apps/javaconf/common/jdbc.properties</value>
+                    <value>file:/apps/javaconf/common/redis.properties</value>
+                </list>
+            </property>
+        </bean>
+    </beans>
+    <!-- test -->
+    <beans profile="test">
+        <bean class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+            <property name="locations">
+                <list>
+                    <value>file:/apps/javaconf/common/jdbc.properties</value>
+                    <value>file:/apps/javaconf/common/redis.properties</value>
+                </list>
+            </property>
+        </bean>
+    </beans>
+		
+</beans>

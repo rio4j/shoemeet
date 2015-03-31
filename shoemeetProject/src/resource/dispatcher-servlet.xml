@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:tx="http://www.springframework.org/schema/tx"
+	xmlns:aop="http://www.springframework.org/schema/aop"
+	xmlns:p="http://www.springframework.org/schema/p"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans
+		http://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/context
+		http://www.springframework.org/schema/context/spring-context.xsd
+		http://www.springframework.org/schema/tx 
+		http://www.springframework.org/schema/tx/spring-tx.xsd
+		http://www.springframework.org/schema/aop
+		http://www.springframework.org/schema/aop/spring-aop.xsd">
+
+	<!-- 想该扫描生效，只能将扫描组件配置放置在该处，否则，需要使用<mvc:annotation-driven />，需要有标签 xmlns:mvc="http://www.springframework.org/schema/mvc" -->
+	<!-- 
+	-->
+	<context:component-scan base-package="com.shoemeet.*" />
+	
+	<bean class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+		<property name="prefix">
+			<value>/WEB-INF/pages/</value>
+			</property>
+			<property name="suffix">
+			<value>.jsp</value>
+		</property>
+	</bean>
+	
+	<bean class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+	    <property name="locations">
+	        <list>
+	            <value>classpath:/jdbc.properties</value>
+	        </list>
+	    </property>
+    </bean>
+    
+	<!-- 配置数据源 -->
+    <bean id="dataSource1" class="org.apache.commons.dbcp.BasicDataSource">
+		<property name="driverClassName" value="${jdbc.driverClassName}" />
+		<property name="url" value="${jdbc.url}" />
+		<property name="username" value="${jdbc.user}" />
+		<property name="password" value="${jdbc.password}" />
+	</bean>
+	
+	<!-- 配置数据源 -->
+    <bean id="dataSource2" class="org.apache.commons.dbcp.BasicDataSource">
+		<property name="driverClassName" value="${jdbc.driverClassName}" />
+		<property name="url" value="${jdbc.url1}" />
+		<property name="username" value="${jdbc.user1}" />
+		<property name="password" value="${jdbc.password1}" />
+	</bean>
+	<!-- 配置数据源 -->
+	
+    <bean id="dataSource3" class="org.apache.commons.dbcp.BasicDataSource">
+		<property name="driverClassName" value="${jdbc.driverClassName}" />
+		<property name="url" value="${jdbc.urlm}" />
+		<property name="username" value="${jdbc.userm}" />
+		<property name="password" value="${jdbc.passwordm}" />
+	</bean>
+	
+	<bean id="dataSourceM" class="org.apache.commons.dbcp.BasicDataSource">
+		<property name="driverClassName" value="${jdbc.driverClassName}" />
+		<property name="url" value="${jdbc.urlm}" />
+		<property name="username" value="${jdbc.userm}" />
+		<property name="password" value="${jdbc.passwordm}" />
+	</bean>
+	
+	<!-- 配置多数据源映射关系 -->
+    <bean id="dataSource" class="com.shoemeet.util.DynamicDataSource">
+        <property name="targetDataSources">
+            <map key-type="java.lang.String">
+        		<entry key="dataSource1" value-ref="dataSource1"></entry>
+                <entry key="dataSource2" value-ref="dataSource2"></entry>
+                <entry key="dataSource3" value-ref="dataSource3"></entry>
+            </map>
+        </property>
+    	<!-- 默认目标数据源为你主库数据源 -->
+        <property name="defaultTargetDataSource" ref="dataSource1"/>
+    </bean>
+    
+	<!-- 注解方式配置事物 在service中@Transactional -->  
+	<!--<tx:annotation-driven transaction-manager="transactionManager" /> -->
+	<!-- 用注解来实现事务管理 -->     
+	<tx:annotation-driven transaction-manager="transactionManager" proxy-target-class="true"/>
+	
+	<bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">  
+		<property name="dataSource" ref="dataSource"></property>
+	</bean>
+	<!-- 拦截器方式配置事物-->  
+	<tx:advice id="transactionAdvice" transaction-manager="transactionManager">  
+	    <tx:attributes>  
+	        <tx:method name="add*" propagation="REQUIRED" /> 
+	        <tx:method name="save*" propagation="REQUIRED" />  
+	        <tx:method name="insert*" propagation="REQUIRED" />  
+	        <tx:method name="append*" propagation="REQUIRED" />  
+	        <tx:method name="init" propagation="REQUIRED" />  
+	        <tx:method name="update*" propagation="REQUIRED" rollback-for="Exception"/>  
+	        <tx:method name="modify*" propagation="REQUIRED" />  
+	        <tx:method name="edit*" propagation="REQUIRED" />  
+	        <tx:method name="delete*" propagation="REQUIRED" />  
+	        <tx:method name="remove*" propagation="REQUIRED" />  
+	        <tx:method name="delAndInit" propagation="REQUIRED" />  
+	
+	        <tx:method name="get*" propagation="REQUIRED" read-only="true" />  
+	        <tx:method name="find*" propagation="REQUIRED" read-only="true" />  
+	        <tx:method name="load*" propagation="REQUIRED" read-only="true" />  
+	        <tx:method name="search*" propagation="REQUIRED" read-only="true" />  
+	        <tx:method name="datagrid*" propagation="REQUIRED" read-only="true" />  
+	        
+	        <tx:method name="*" propagation="NOT_SUPPORTED" />  
+	    </tx:attributes>  
+	</tx:advice> 
+	
+	<aop:config>  
+		<aop:pointcut id="transactionPointcut" expression="execution(* com.shoemeet.service.*.*(..))" />  
+		<aop:advisor pointcut-ref="transactionPointcut" advice-ref="transactionAdvice" />
+    </aop:config>
+    
+    <bean id="dynamiacInterceptor" class="com.shoemeet.util.DynamiacInterceptor"></bean>
+    <!-- 
+    <bean id="dynamiacMethodPointcut" class="org.springframework.aop.support.NameMatchMethodPointcut">
+		<property name="mappedNames">
+			<list>
+				<value>add*</value>
+				<value>update*</value>
+				<value>find*</value>
+			</list>
+		</property>
+	</bean>
+	 -->
+	<!--  
+    <bean class="org.springframework.aop.framework.autoproxy.BeanNameAutoProxyCreator">
+		<property name="proxyTargetClass">
+			<value>true</value>
+		</property>
+		<property name="beanNames">
+			<list>
+				<value>*Service</value>
+			</list>
+		</property>
+		<property name="interceptorNames">
+			<list>
+				<value>dynamiacInterceptor</value>
+			</list>
+		</property>
+	</bean>
+	 -->
+	<!-- 
+	<bean id="myAroundInterceptor" class="org.springframework.aop.support.DefaultPointcutAdvisor">
+		<property name="pointcut" ref="dynamiacMethodPointcut" />
+		<property name="advice" ref="dynamiacInterceptor" />
+	</bean>
+	 -->
+</beans>
